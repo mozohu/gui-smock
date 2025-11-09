@@ -1,0 +1,82 @@
+import { Client } from '@stomp/stompjs';
+
+class EbusService {
+  constructor() {
+    this.client = null;
+    this.listeners = [];
+    this.connected = false;
+  }
+
+  connect(customUrl = null) {
+    if (this.client) return;
+
+    const loc = window.location;
+    const defaultUrl = `ws://${loc.hostname}:61614/stomp`;
+    const brokerUrl = customUrl || defaultUrl;
+
+    console.log(`[EbusService] Connecting to ${brokerUrl}`);
+
+    this.client = new Client({
+      brokerURL: brokerUrl,
+      reconnectDelay: 5000,
+      debug: (str) => console.log('[STOMP]', str),
+    });
+
+    this.client.onConnect = (frame) => {
+      console.log('[EbusService] Connected', frame.headers);
+      this.connected = true;
+
+      // 訂閱 EBUS topic
+      this.client.subscribe('/topic/app', (msg) => this._onMessage(msg));
+    };
+
+    this.client.onStompError = (frame) => {
+      console.error('[STOMP ERROR]', frame.headers['message'], frame.body);
+    };
+
+    this.client.onWebSocketClose = () => {
+      console.log('[EbusService] Connection closed');
+      this.connected = false;
+    };
+
+    this.client.activate();
+  }
+
+  _onMessage(msg) {
+   console.log(msg);
+    try {
+      const ev = JSON.parse(msg.body);
+      if (ev?.e) this.notifyAll(ev);
+    } catch (e) {
+      console.error('[EBUS JSON ERROR]', msg.body);
+    }
+  }
+
+  onEvent(cb) {
+    this.listeners.push(cb);
+  }
+
+  notifyAll(ev) {
+    this.listeners.forEach(fn => fn(ev));
+  }
+
+  send(ev, arg) {
+    console.log("cli:"+this.client);
+    console.log("con:"+this.connected);
+    if (!this.client || !this.connected) {
+      console.warn('[EbusService] 尚未連線，無法發送');
+      return;
+    }
+    
+    const msg = { e: ev, ...(arg && { arg }) };
+    this.client.publish({
+      destination: '/queue/app',
+      body: JSON.stringify(msg)
+    });
+
+    console.log('[EbusService] 發送:', msg);
+  }
+}
+
+export default new EbusService();
+
