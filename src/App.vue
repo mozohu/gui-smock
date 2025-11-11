@@ -85,11 +85,19 @@ export default {
 </script>
 
 <style scoped>
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  font-family: sans-serif;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 8px;
 }
+
 .connected { color: green; }
 .disconnected { color: red; }
 </style>

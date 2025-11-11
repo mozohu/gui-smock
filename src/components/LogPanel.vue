@@ -1,41 +1,82 @@
 <template>
   <div class="log-panel">
     <h3>事件日誌</h3>
-    <table>
-      <thead><tr><th>時間</th><th>事件</th><th>內容</th></tr></thead>
-      <tbody>
-        <tr v-for="(log, idx) in logs" :key="idx">
-          <td>{{ log.time }}</td>
-          <td>{{ log.name }}</td>
-          <td><pre>{{ log.content }}</pre></td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="log-table">
+      <div class="log-header">
+        <div class="col-time">時間</div>
+        <div class="col-event">事件名稱</div>
+        <div class="col-content">內容</div>
+      </div>
+      <div class="log-body">
+        <div v-for="(log, idx) in logs" :key="idx" class="log-row">
+          <div class="col-time">{{ log.time }}</div>
+          <div class="col-event">{{ log.name }}</div>
+          <div class="col-content">{{ log.content }}</div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-export default { props: ['logs'] }
+export default {
+  props: {
+    logs: { type: Array, default: () => [] }
+  }
+}
 </script>
 
 <style scoped>
 .log-panel {
+  max-width: 720px;
+  margin: 10px auto 20px auto;
+  font-family: sans-serif;
+}
+
+.log-panel h3 {
+  margin-bottom: 8px;
+}
+
+/* 表格區塊 */
+.log-table {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+/* 標題列 */
+.log-header, .log-row {
+  display: grid;
+  grid-template-columns: 120px 160px 1fr;
+  align-items: center;
+}
+
+.log-header {
+  background-color: #f5f5f5;
+  font-weight: bold;
+  border-bottom: 1px solid #ddd;
+}
+
+/* 內容區 */
+.log-body {
   max-height: 300px;
-  overflow: auto;
-  border: 1px solid #ccc;
+  overflow-y: auto;
+  overflow-x: auto;
 }
-table {
-  width: 100%;
-  border-collapse: collapse;
+
+.log-row {
+  border-bottom: 1px solid #eee;
 }
-th, td {
-  border: 1px solid #ccc;
-  padding: 4px;
+
+.log-row:last-child {
+  border-bottom: none;
 }
-pre {
-  white-space: pre-wrap;
-  word-break: break-all;
-  margin: 0;
+
+.log-row div {
+  padding: 4px 6px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 </style>
-

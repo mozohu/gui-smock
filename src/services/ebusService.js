@@ -7,6 +7,7 @@ class EbusService {
     this.connected = false
     this.listeners = []
     this.statusListeners = []
+    this.retryTimer = null
   }
 
   connect(customUrl = null) {
@@ -32,6 +33,7 @@ class EbusService {
         console.log('[EbusService] Connected', frame.headers)
         this.connected = true
         this._notifyStatus(true)
+        clearTimeout(this.retryTimer)
         // 同時訂閱 queue/topic
         this.client.subscribe('/topic/app', (msg) => this._onMessage(msg))
       },
@@ -39,17 +41,32 @@ class EbusService {
       (err) => {
         console.error('[EbusService] Connection error', err)
         this.connected = false
+        this._handleDisconnect()
       }
     )
+    // WebSocket 關閉事件（broker 關閉或網路中斷）
+    this.client.onclose = () => {
+      console.warn('[EbusService] WebSocket closed')
+      this._handleDisconnect()
+    }
+  }
+
+  _handleDisconnect() {
+    if (!this.connected) return
+    this.connected = false
+    this._notifyStatus(false)
+    console.warn('[EbusService] Disconnected. 將於 5 秒後重連...')
+    clearTimeout(this.retryTimer)
+    this.retryTimer = setTimeout(() => this.connect(), 5000)
   }
 
   _onMessage(msg) {
     try {
-      const ev = JSON.parse(msg.body)
+      let body = msg.body?.replace(/\0+$/, '').trim()
+      const ev = JSON.parse(body)
       if (ev?.e) this.listeners.forEach((cb) => cb(ev))
     } catch (e) {
-      console.error('[EBUS JSON ERROR]', e);
-      console.error('[EBUS JSON ERROR]', msg.body)
+      console.error('[EBUS JSON ERROR]', e, msg.body)
     }
   }
 
