@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<!DOCTYPE project>
+
+<project name="IVM GUI" default="deb" basedir=".">
+	<tstamp>
+		<format property="TODAY_TW" pattern="yyyyMMdd" locale="en,TW"/>
+	</tstamp>
+
+	<property environment="env"/>
+	<property name="verbose" value="false"/>
+	<property name="package_name" value="gui-weche-test"/>
+	<property name="section" value="python"/>
+	<property name="package_version" value="0.0.1"/>
+	<property name="debian_version" value="1"/>
+	<property name="maintainer" value="svn"/>
+	<property name="maintainer_email" value="mozo@transtep.com"/>
+	<property name="brief" value="Tester GUI for Weche VMC"/>
+	<property name="description" value="Tester GUI for Weche VMC"/>
+	<property name="deb_depends" value=""/>
+
+	<property name="repository" value="http://repository.transtep.com/repository"/>
+	<property name="lib.dir" value="lib"/>
+	<property name="dist.dir" value="deb"/>
+	<property name="deb_root" value="deb_root"/>
+	<property name="deb_script" value="deb_script"/>
+	<property name="deb_conf" value="deb_conf"/>
+	<property name="deb_src" value="dist"/>
+	<property name="src_dir" value="/opt/app/gui/gui-weche-test"/>
+
+
+	<!-- ================================================================ -->
+	<!--                       tagert: prepare                            -->
+	<!-- ================================================================ -->
+	<target name="prepare">
+		<mkdir dir="${lib.dir}"/>
+		<!-- deb library -->
+		<!--get src="${repository}/thirdparty/ant/ant-deb-0.0.1.jar"
+			dest="${lib.dir}/ant-deb-0.0.1.jar" usetimestamp="true" verbose="${verbose}"/-->
+	</target>
+
+	<!-- ================================================================ -->
+	<!--                       tagert: revision                           -->
+	<!-- ================================================================ -->
+	<target name="revision">
+		<macrodef name="property-exp">
+                    <attribute name="name" />
+                    <attribute name="value" />
+                    <sequential>
+                        <script language="javascript">
+                            project.setProperty("@{name}", eval(@{value}));
+                        </script>
+                    </sequential>
+                </macrodef>
+		<exec executable="/usr/bin/git" outputproperty="git.revision">
+			<arg value="rev-list"/>
+			<arg value="--count"/>
+			<arg value="HEAD"/>
+		</exec>
+		<property-exp name="revision" value="${git.revision}"/>
+		<echo>Revision: ${revision}</echo>
+	</target>
+
+	<!-- ================================================================ -->
+	<!--                       tagert: tar                                -->
+	<!-- ================================================================ -->
+	<target name="tar" depends="revision">
+		<mkdir dir="${dist.dir}"/>
+		<tar destfile="${dist.dir}/${package_name}_${package_version}.${TODAY_TW}-r${revision}.tar"
+			basedir="${deb_root}"
+		/>
+		<gzip destfile="${dist.dir}/${package_name}_${package_version}.${TODAY_TW}-r${revision}.tar.gz"
+			src="${dist.dir}/${package_name}_${package_version}.${TODAY_TW}.tar"/>
+	</target>
+
+	<!-- ================================================================ -->
+	<!--                       tagert: move lastest src                   -->
+	<!-- ================================================================ -->
+	<target name="update-src">
+		<delete dir="${deb_root}${src_dir}"/>
+		<mkdir dir="${deb_root}${src_dir}"/>
+		<copy todir="${deb_root}${src_dir}">
+			<fileset dir="${deb_src}"/>
+		</copy>
+	</target>
+
+	<!-- ================================================================ -->
+	<!--                       tagert: deb                                -->
+	<!-- ================================================================ -->
+	<target name="deb" depends="prepare,revision,update-src">
+		<delete>
+			<fileset dir="${deb_root}" includes="**/*.log"/>
+		</delete>
+		<taskdef name="deb" classname="com.googlecode.ant_deb_task.Deb" classpath="${lib.dir}/ant-deb-0.0.1.jar"/>
+		<mkdir dir="${dist.dir}"/>
+		<mkdir dir="${deb_conf}"/>
+		<mkdir dir="${deb_script}"/>
+		<deb todir="${dist.dir}" package="${package_name}" depends="${deb_depends}" section="${section}" postinst="${deb_script}/postinst" postrm="${deb_script}/postrm" prerm="${deb_script}/prerm">
+			<version upstream="${package_version}-r${revision}" debian="${debian_version}"/>
+			<maintainer name="${maintainer}" email="${maintainer_email}"/>
+			<description synopsis="${brief}">${description}</description>
+			<tarfileset dir="${deb_root}" prefix=""/>
+				<include name="*" />
+		</deb>
+	</target>
+
+	<!-- ================================================================ -->
+	<!--                 tagert: continuous integration                   -->
+	<!-- ================================================================ -->
+	<target name="ci" depends="deb">
+		<property name="rc_deb_file" value="${package_name}_${package_version}-r${revision}-${debian_version}_all.deb"/>
+		<echo>upload ${rc_deb_file}</echo>
+		<exec executable="php">
+			<arg value="tools/upload_rc.php"/>
+			<arg value="${dist.dir}/${rc_deb_file}"/>
+		</exec>
+	</target>
+
+	<!-- ================================================================ -->
+	<!--                       tagert: clean                              -->
+	<!-- ================================================================ -->
+	<target name="clean">
+		<delete dir="${dist.dir}"/>
+		<delete dir="${lib.dir}"/>
+	</target>
+</project>
