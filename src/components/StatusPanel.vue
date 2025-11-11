@@ -4,14 +4,16 @@
     <div>sys: {{ statusData.sys }}</div>
     <div>sess: {{ statusData.sess }}</div>
     <div>dispense: {{ statusData.dispense }}</div>
-    <div>vmc: {{ vmcState.mode }}</div>
+    <div>vmc: {{ vmcState.mode }}{{ vmcState.mode_name ? ` (${vmcState.mode_name})` : '' }}</div>
+    <div>微波1剩餘時間: {{ heating.etr1 ?? '-' }}</div>
+    <div>微波2剩餘時間: {{ heating.etr2 ?? '-' }}</div>
     <div>溫度: {{ temp }}</div>
   </div>
 </template>
 
 <script>
 export default {
-  props: ['statusData', 'vmcState', 'temp']
+  props: ['statusData', 'vmcState', 'temp', 'heating']
 }
 </script>
 <style scoped>

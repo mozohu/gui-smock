@@ -5,7 +5,7 @@
       <h2>WeChe 測試介面</h2>
       <span :class="statusClass">Ebus: {{ ebusConnected ? 'connected' : 'disconnected' }}</span>
     </div>
-    <StatusPanel :statusData="statusData" :vmcState="vmcState" :temp="temperature"/>
+    <StatusPanel :statusData="statusData" :vmcState="vmcState" :temp="temperature" :heating="heating"/>
     <ControlPanel @dispatch="onDispatch"/>
     <LogPanel :logs="logs"/>
   </div>
@@ -27,6 +27,7 @@ export default {
       statusData: {},
       vmcState: {},
       temperature: null,
+      heating: {},
       logs: [],
     }
   },
@@ -56,6 +57,7 @@ export default {
       if (e.e === 'sys/after_hint') {
         if (e.arg.vmc) this.vmcState = e.arg.vmc
         if (e.arg.temp) this.temperature = e.arg.temp
+        if (e.arg.heating) this.heating = e.arg.heating   // ✅ 新增
       }
     },
     onDispatch(params) {
