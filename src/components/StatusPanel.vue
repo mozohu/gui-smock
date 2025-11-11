@@ -5,8 +5,8 @@
     <div>sess: {{ statusData.sess }}</div>
     <div>dispense: {{ statusData.dispense }}</div>
     <div>vmc: {{ vmcState.mode }}{{ vmcState.mode_name ? ` (${vmcState.mode_name})` : '' }}</div>
-    <div>微波1剩餘時間: {{ heating.etr1 ?? '-' }}</div>
-    <div>微波2剩餘時間: {{ heating.etr2 ?? '-' }}</div>
+    <div>微波1剩餘時間: {{ heating.ert1 ?? '-' }}</div>
+    <div>微波2剩餘時間: {{ heating.ert2 ?? '-' }}</div>
     <div>溫度: {{ temp }}</div>
   </div>
 </template>
